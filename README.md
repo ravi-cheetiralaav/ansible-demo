@@ -43,3 +43,6 @@ The role pins the five packages uploaded to GAR, enables the PostgreSQL service,
 and queries the local server as `postgres` to confirm it reports major version
 17. A failed connection or mismatched version fails the playbook. Database
 users, networking, and authentication are left for later work.
+
+For a step-by-step introduction, see the
+[Ansible workspace guide](docs/ansible-guide.md).
