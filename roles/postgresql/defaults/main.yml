@@ -1,0 +1,10 @@
+---
+postgresql_gar_project: project-025ac1f2-75d5-497d-a57
+postgresql_gar_location: australia-southeast1
+postgresql_gar_repository: postgres-debs
+postgresql_packages:
+  - postgresql-client-common=293.pgdg13+1
+  - postgresql-common=293.pgdg13+1
+  - libpq5=18.6-1.pgdg13+2
+  - postgresql-client-17=17.11-1.pgdg13+2
+  - postgresql-17=17.11-1.pgdg13+2

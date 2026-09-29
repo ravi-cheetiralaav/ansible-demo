@@ -1,0 +1,6 @@
+---
+- name: Install PostgreSQL 17 from Artifact Registry
+  hosts: postgres
+  become: true
+  roles:
+    - postgresql
