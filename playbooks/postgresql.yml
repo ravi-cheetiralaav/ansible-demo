@@ -1,5 +1,5 @@
 ---
-- name: Install PostgreSQL 17 from Artifact Registry
+- name: Install PostgreSQL 17 from JFrog
   hosts: postgres
   become: true
   roles:

@@ -1,14 +1,14 @@
 ---
 title: PostgreSQL 17 Ansible lab
-description: Install PostgreSQL 17 on the Debian 13 GCP lab VM from Artifact Registry.
+description: Install PostgreSQL 17 on the Debian 13 GCP lab VM from JFrog Artifactory.
 ---
 
 ## PostgreSQL lab
 
 The playbook installs PostgreSQL 17.11 and its client and shared packages from
-the private `postgres-debs` APT repository in Artifact Registry. The VM's attached
-service account needs Artifact Registry Reader on that repository and the
-`cloud-platform` access scope. Debian supplies any remaining dependencies.
+a private JFrog Artifactory Debian APT repository. Provide the repository URL,
+signing-key URL, and a read-only JFrog identity to Ansible on the WSL control
+node. Debian supplies any remaining dependencies.
 PostgreSQL uses its package defaults; this playbook does not expose port 5432.
 
 Run Ansible from WSL Ubuntu, where Ansible is installed. The inventory targets
@@ -33,13 +33,15 @@ export ANSIBLE_CONFIG="$PWD/ansible.cfg"
 ansible-playbook playbooks/postgresql.yml --syntax-check
 ```
 
-When you are ready to install, run the playbook separately:
+Before installation, export the four JFrog settings described in the
+[Ansible workspace guide](docs/ansible-guide.md). The syntax check does not
+require credentials. When you are ready to install, run the playbook separately:
 
 ```bash
 ansible-playbook playbooks/postgresql.yml
 ```
 
-The role pins the five packages uploaded to GAR, enables the PostgreSQL service,
+The role pins the five packages uploaded to JFrog, enables the PostgreSQL service,
 and queries the local server as `postgres` to confirm it reports major version
 17. A failed connection or mismatched version fails the playbook. Database
 users, networking, and authentication are left for later work.

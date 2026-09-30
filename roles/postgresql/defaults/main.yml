@@ -1,7 +1,8 @@
 ---
-postgresql_gar_project: project-025ac1f2-75d5-497d-a57
-postgresql_gar_location: australia-southeast1
-postgresql_gar_repository: postgres-debs
+postgresql_jfrog_url: "{{ lookup('ansible.builtin.env', 'JFROG_DEB_REPO_URL') }}"
+postgresql_jfrog_signing_key_url: "{{ lookup('ansible.builtin.env', 'JFROG_DEB_SIGNING_KEY_URL') }}"
+postgresql_jfrog_user: "{{ lookup('ansible.builtin.env', 'JFROG_USER') }}"
+postgresql_jfrog_token: "{{ lookup('ansible.builtin.env', 'JFROG_ACCESS_TOKEN') }}"
 postgresql_packages:
   - postgresql-client-common=293.pgdg13+1
   - postgresql-common=293.pgdg13+1
