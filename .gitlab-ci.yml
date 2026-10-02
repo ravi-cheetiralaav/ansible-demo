@@ -1,0 +1,54 @@
+---
+stages:
+  - validate
+  - deploy
+
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
+    - when: never
+
+default:
+  image: python:3.12-slim-bookworm
+  tags:
+    - ansible-gcp
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends openssh-client ca-certificates curl
+    - python -m pip install --no-cache-dir 'ansible-core>=2.19,<2.20'
+    - ansible-playbook --version
+
+variables:
+  ANSIBLE_CONFIG: "$CI_PROJECT_DIR/ansible.cfg"
+  ANSIBLE_INVENTORY: "$CI_PROJECT_DIR/inventory/ci.yml"
+  ANSIBLE_HOST_KEY_CHECKING: "True"
+  JFROG_DEB_REPO_URL: "https://trialha4373.jfrog.io/artifactory/postgresql-debian"
+  JFROG_DEB_SIGNING_KEY_URL: "https://trialha4373.jfrog.io/artifactory/api/security/keypair/Debian/public"
+
+validate:
+  stage: validate
+  script:
+    - ansible-playbook playbooks/postgresql.yml --syntax-check
+    - ansible-playbook playbooks/postgresql.yml --limit postgres17-lab-2 --list-hosts
+
+deploy_postgresql:
+  stage: deploy
+  when: manual
+  allow_failure: false
+  resource_group: postgres17-lab-2
+  environment:
+    name: postgresql-lab
+  script:
+    - |
+      set -eu
+      test -n "${POSTGRES_HOST:?Set POSTGRES_HOST to the reachable VM address}"
+      test -n "${POSTGRES_SSH_USER:?Set POSTGRES_SSH_USER}"
+      test -n "${POSTGRES_HOST_KEY_ALIAS:?Set the verified VM host-key alias}"
+      test -s "${SSH_PRIVATE_KEY:?Set SSH_PRIVATE_KEY as a File variable}"
+      test -s "${SSH_KNOWN_HOSTS:?Set SSH_KNOWN_HOSTS as a File variable}"
+      chmod 600 "$SSH_PRIVATE_KEY" "$SSH_KNOWN_HOSTS"
+    - curl -q -fsS -o /dev/null "$JFROG_DEB_SIGNING_KEY_URL"
+    - curl -q -fsS -o /dev/null "$JFROG_DEB_REPO_URL/dists/trixie/Release"
+    - ansible postgres17-lab-2 -m ansible.builtin.ping
+    - ansible postgres17-lab-2 --become -m ansible.builtin.command -a 'id -u'
+    - ansible-playbook playbooks/postgresql.yml --limit postgres17-lab-2

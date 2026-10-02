@@ -13,10 +13,7 @@
       - postgresql_jfrog_url is match('^https://[^/]+/artifactory/[^/]+/?$')
       - postgresql_jfrog_signing_key_url is match('^https://')
       - postgresql_jfrog_signing_key_url | regex_search('^https://[^/]+') == postgresql_jfrog_url | regex_search('^https://[^/]+')
-      - postgresql_jfrog_user | length > 0
-      - postgresql_jfrog_token | length > 0
-    fail_msg: Set JFROG_DEB_REPO_URL, JFROG_DEB_SIGNING_KEY_URL, JFROG_USER, and JFROG_ACCESS_TOKEN on the Ansible controller.
-  no_log: true
+    fail_msg: Set JFROG_DEB_REPO_URL and JFROG_DEB_SIGNING_KEY_URL on the Ansible controller.
 
 - name: Remove old Artifact Registry APT source
   ansible.builtin.file:
@@ -28,29 +25,13 @@
     path: /etc/apt/trusted.gpg.d/artifact-registry.gpg
     state: absent
 
-- name: Configure JFrog APT credentials
-  ansible.builtin.copy:
-    dest: /etc/apt/auth.conf.d/postgresql-jfrog.conf
-    content: |
-      machine {{ postgresql_jfrog_url | regex_replace('^https://', '') }}
-      login {{ postgresql_jfrog_user }}
-      password {{ postgresql_jfrog_token }}
-    owner: root
-    group: root
-    mode: '0600'
-  no_log: true
-
 - name: Install JFrog repository signing key
   ansible.builtin.get_url:
     url: '{{ postgresql_jfrog_signing_key_url }}'
     dest: /usr/share/keyrings/postgresql-jfrog.asc
-    url_username: '{{ postgresql_jfrog_user }}'
-    url_password: '{{ postgresql_jfrog_token }}'
-    force_basic_auth: true
     owner: root
     group: root
     mode: '0644'
-  no_log: true
 
 - name: Configure PostgreSQL JFrog repository
   ansible.builtin.copy:

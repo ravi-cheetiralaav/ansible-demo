@@ -1,0 +1,15 @@
+---
+all:
+  children:
+    postgres:
+      hosts:
+        postgres17-lab-2:
+          ansible_host: "{{ lookup('ansible.builtin.env', 'POSTGRES_HOST') }}"
+          ansible_user: "{{ lookup('ansible.builtin.env', 'POSTGRES_SSH_USER') }}"
+          ansible_ssh_private_key_file: "{{ lookup('ansible.builtin.env', 'SSH_PRIVATE_KEY') }}"
+          ansible_ssh_common_args: >-
+            -o HostKeyAlias={{ lookup('ansible.builtin.env', 'POSTGRES_HOST_KEY_ALIAS') | quote }}
+            -o UserKnownHostsFile={{ lookup('ansible.builtin.env', 'SSH_KNOWN_HOSTS') | quote }}
+            -o StrictHostKeyChecking=yes
+            -o IdentitiesOnly=yes
+            -o BatchMode=yes

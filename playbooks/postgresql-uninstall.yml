@@ -1,0 +1,76 @@
+---
+- name: Uninstall PostgreSQL 17 while preserving database files
+  hosts: postgres17-lab-2
+  become: true
+  tasks:
+    - name: Require Debian 13 amd64
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == 'Debian'
+          - ansible_distribution_major_version == '13'
+          - ansible_architecture == 'x86_64'
+        fail_msg: This playbook requires Debian 13 amd64.
+
+    - name: Record PostgreSQL 17 directories before uninstall
+      ansible.builtin.stat:
+        path: '{{ item }}'
+      loop:
+        - /var/lib/postgresql/17/main
+        - /etc/postgresql/17/main
+      register: postgresql_directories_before
+
+    - name: Remove PostgreSQL 17 binaries without purging or autoremoving
+      ansible.builtin.apt:
+        name:
+          - postgresql-17
+          - postgresql-client-17
+        state: absent
+        purge: false
+        autoremove: false
+
+    - name: Gather installed packages after uninstall
+      ansible.builtin.package_facts:
+        manager: apt
+      when: not ansible_check_mode
+
+    - name: Verify PostgreSQL 17 packages are no longer installed
+      ansible.builtin.assert:
+        that:
+          - "'postgresql-17' not in ansible_facts.packages"
+          - "'postgresql-client-17' not in ansible_facts.packages"
+      when: not ansible_check_mode
+
+    - name: Read remaining cluster status
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/pg_lsclusters
+          - --json
+      register: postgresql_remaining_clusters
+      changed_when: false
+      when: not ansible_check_mode and 'postgresql-common' in ansible_facts.packages
+
+    - name: Verify PostgreSQL 17 clusters are stopped
+      ansible.builtin.assert:
+        that:
+          - >-
+            postgresql_remaining_clusters.stdout | from_json |
+            selectattr('version', 'equalto', '17') |
+            rejectattr('running', 'equalto', 0) | list | length == 0
+      when: not ansible_check_mode and 'postgresql-common' in ansible_facts.packages
+
+    - name: Check PostgreSQL 17 directories after uninstall
+      ansible.builtin.stat:
+        path: '{{ item }}'
+      loop:
+        - /var/lib/postgresql/17/main
+        - /etc/postgresql/17/main
+      register: postgresql_directories_after
+      when: not ansible_check_mode
+
+    - name: Verify existing data and configuration directories were preserved
+      ansible.builtin.assert:
+        that:
+          - >-
+            postgresql_directories_before.results | map(attribute='stat.exists') | list ==
+            postgresql_directories_after.results | map(attribute='stat.exists') | list
+      when: not ansible_check_mode
